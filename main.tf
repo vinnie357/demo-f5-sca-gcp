@@ -20,7 +20,7 @@ provider google {
 # project
 resource random_pet buildSuffix {
   keepers = {
-    prefix = var.projectPrefix
+    prefix = var.prefix
   }
   length    = 2
   separator = "-"

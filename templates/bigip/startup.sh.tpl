@@ -121,6 +121,7 @@ cat  <<'EOF' > /config/cloud/custom-config.sh
 #!/bin/bash
 source /usr/lib/bigstart/bigip-ready-functions
 wait_bigip_ready
+
 source /config/cloud/interface.config
 MGMTNETWORK=$(/bin/ipcalc -n $MGMTADDRESS $MGMTMASK | cut -d= -f2)
 INT1NETWORK=$(/bin/ipcalc -n $INT1ADDRESS $INT1MASK | cut -d= -f2)
@@ -128,17 +129,22 @@ INT2NETWORK=$(/bin/ipcalc -n $INT2ADDRESS $INT2MASK | cut -d= -f2)
 echo "MGMTNETWORK=$MGMTNETWORK" >> /config/cloud/interface.config
 echo "INT1NETWORK=$INT1NETWORK" >> /config/cloud/interface.config
 echo "INT2NETWORK=$INT2NETWORK" >> /config/cloud/interface.config
+
 PROGNAME=$(basename $0)
+
 if [ -f /config/startupFinished ]; then
   exit
 fi
+
 date
 echo "Starting custom config"
+
 # Error Exit Function
 function error_exit {
   echo "$${PROGNAME}: $${1:-\"Unknown Error\"}" 1>&2
   exit 1
 }
+
 # Network Wait Function
 waitNetwork () {
 checks=0
@@ -154,6 +160,7 @@ while [ $checks -lt 120 ]; do
   sleep 10
 done
 }
+
 # Toolchain Wait Function
 function wait_for_ready {
   app=$1
@@ -179,11 +186,14 @@ function wait_for_ready {
     error_exit "$LINENO: $${app} was not installed correctly. Exit."
   fi
 }
+
 # Variables
 projectId='${gcp_project_id}'
 usecret='${usecret}'
 ksecret='${ksecret}'
+bigIqSecret='${bigIqSecret}'
 mgmtGuiPort="443"
+
 # Workaround: Use TMSH commands for networking
 # DO doesn't support "interface" as route target
 # https://github.com/F5Networks/f5-declarative-onboarding/issues/147
@@ -218,19 +228,23 @@ do
     error_exit "$LINENO: An error has occurred while executing $CMD. Aborting!"
   fi
 done
+
 date
+
 # BIG-IP Credentials
 waitNetwork
 echo "Retrieving BIG-IP password from Metadata secret"
 svcacct_token=$(curl -s -f --retry 20 "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" -H "Metadata-Flavor: Google" | jq -r ".access_token")
-passwd=$(curl -s -f --retry 20 "https://secretmanager.googleapis.com/v1/projects/$projectId/secrets/$usecret/versions/1:access" -H "Authorization: Bearer $svcacct_token" | jq -r ".payload.data" | base64 --decode)
+passwd=$(curl -s -f --retry 20 "https://secretmanager.googleapis.com/v1/projects/$projectId/secrets/$usecret/versions/latest:access" -H "Authorization: Bearer $svcacct_token" | jq -r ".payload.data" | base64 --decode)
+bigiqPass=$(curl -s -f --retry 20 "https://secretmanager.googleapis.com/v1/projects/$projectId/secrets/$bigIqSecret/versions/latest:access" -H "Authorization: Bearer $svcacct_token" | jq -r ".payload.data" | base64 --decode)
 date
+
 # Submit DO Declaration
 wait_for_ready declarative-onboarding
 file_loc="/config/cloud/do.json"
 echo "Submitting DO declaration"
 sed -i "s/\$${admin_password}/$passwd/g" $file_loc
-sed -i "s/\$${bigIqPassword}/$passwd/g" $file_loc
+sed -i "s/-bigIqPassword-/$bigiqPass/g" $file_loc
 sed -i "s/\$${local_selfip_ext}/$INT1ADDRESS/g" $file_loc
 sed -i "s/\$${local_selfip_int}/$INT2ADDRESS/g" $file_loc
 sed -i "s/\$${local_host}/$HOSTNAME/g" $file_loc
@@ -240,6 +254,7 @@ if [[ $response_code == *200 || $response_code == *202 ]]; then
 else
   error_exit "$LINENO: DO creation failed. Exit."
 fi
+
 # Check DO Task
 checks=0
 response_code=""
@@ -257,7 +272,9 @@ done
 if [[ $response_code != *200 ]]; then
   error_exit "$LINENO: DO task failed. Exit."
 fi
+
 date
+
 # Submit AS3 Declaration
 wait_for_ready appsvcs
 file_loc="/config/cloud/as3.json"
@@ -278,7 +295,9 @@ else
     echo "Response code: $${response_code}"
   fi
 fi
+
 date
+
 # Submit CFE Declaration
 wait_for_ready cloud-failover
 file_loc="/config/cloud/cfe.json"
@@ -291,6 +310,7 @@ else
   echo "Failed to deploy CFE; continuing..."
   echo "Response code: $${response_code}"
 fi
+
 # # Submit TS Declaration
 # wait_for_ready telemetry
 # file_loc="/config/cloud/ts.json"
@@ -305,9 +325,11 @@ fi
 #   echo "Failed to deploy TS; continuing..."
 #   echo "Response code: $${response_code}"
 # fi
+
 # Cleanup
 echo "Removing DO/AS3/TS/CFE declaration files"
 rm -rf /config/cloud/do.json /config/cloud/as3.json /config/cloud/ts.json /config/cloud/cfe.json
+
 date
 echo "Finished custom config"
 touch /config/startupFinished
@@ -475,8 +497,9 @@ rm -rf $rpmFilePath/*.rpm
 #############################
 
 # https://support.f5.com/csp/article/K11948
-echo "(/config/cloud/custom-config.sh | tee /var/log/cloud/custom-config.log >> $LOG_FILE) &" >> /config/startup
 chmod +w /config/startup
+echo "(/config/cloud/custom-config.sh | tee /var/log/cloud/custom-config.log >> $LOG_FILE) &" >> /config/startup
+echo "/config/cloud/mgmt-route.sh &" >> /config/startup
 chmod +x /config/cloud/mgmt-route.sh
 chmod +x /config/cloud/custom-config.sh
 chmod +x /config/cloud/collect-interface.sh

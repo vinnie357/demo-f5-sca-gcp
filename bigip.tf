@@ -1,18 +1,4 @@
 # BIG-IP
-# ha storage bucket for cfe
-resource google_storage_bucket bigip-ha {
-  name     = "${var.prefix}-bigip-storage"
-  location = "US"
-
-  website {
-    main_page_suffix = "index.html"
-    not_found_page   = "404.html"
-  }
-  labels = {
-    f5_cloud_failover_label = var.f5_cloud_failover_label
-  }
-  force_destroy = true
-}
 
 # Public IP for VIP
 resource "google_compute_address" "vip1" {
@@ -36,14 +22,30 @@ resource "google_compute_target_instance" "f5vm02" {
   name     = "${var.prefix}-${var.host2_name}-ti"
   instance = google_compute_instance.f5vm02.id
 }
+# bucket
+resource google_storage_bucket bigip-ha {
+  name     = "${var.prefix}-bigip-storage"
+  location = "US"
 
+  website {
+    main_page_suffix = "index.html"
+    not_found_page   = "404.html"
+  }
+  labels = {
+    f5_cloud_failover_label = var.f5_cloud_failover_label
+  }
+  force_destroy = true
+}
+# Setup Onboarding scripts
+# #do_byol.json, do.json, do_bigiq.json
 # Setup Onboarding scripts
 locals {
   vm01_onboard = templatefile("${path.module}/templates/bigip/startup.sh.tpl", {
     uname          = var.uname
     usecret        = var.usecret
     ksecret        = var.ksecret
-    gcp_project_id = var.gcp_project_id
+    bigIqSecret    = var.bigIqSecret != "" ? var.bigIqSecret : ""
+    gcp_project_id = var.gcpProjectId
     DO_URL         = var.DO_URL
     AS3_URL        = var.AS3_URL
     TS_URL         = var.TS_URL
@@ -58,7 +60,8 @@ locals {
     uname          = var.uname
     usecret        = var.usecret
     ksecret        = var.ksecret
-    gcp_project_id = var.gcp_project_id
+    bigIqSecret    = var.bigIqSecret != "" ? var.bigIqSecret : ""
+    gcp_project_id = var.gcpProjectId
     DO_URL         = var.DO_URL
     AS3_URL        = var.AS3_URL
     TS_URL         = var.TS_URL
@@ -69,7 +72,7 @@ locals {
     TS_Document    = local.ts_json
     CFE_Document   = local.vm02_cfe_json
   })
-  vm01_do_json = templatefile("${path.module}/templates/bigip/do.json.tpl", {
+  vm01_do_json = templatefile("${"${"${path.module}/templates/bigip/do"}${var.license1 != "" ? "_byol" : "${var.bigIqLicensePool != "" ? "_bigiq" : ""}"}"}${var.bigIqUnitOfMeasure != "" ? "_ela" : ""}.json.tpl", {
     regKey             = var.license1
     admin_username     = var.uname
     host1              = "${var.prefix}-${var.host1_name}"
@@ -88,7 +91,7 @@ locals {
     bigIqUnitOfMeasure = var.bigIqUnitOfMeasure
     bigIqHypervisor    = var.bigIqHypervisor
   })
-  vm02_do_json = templatefile("${path.module}/templates/bigip/do.json.tpl", {
+  vm02_do_json = templatefile("${"${"${path.module}/templates/bigip/do"}${var.license2 != "" ? "_byol" : "${var.bigIqLicensePool != "" ? "_bigiq" : ""}"}"}${var.bigIqUnitOfMeasure != "" ? "_ela" : ""}.json.tpl", {
     regKey             = var.license2
     admin_username     = var.uname
     host1              = "${var.prefix}-${var.host1_name}"
@@ -108,15 +111,15 @@ locals {
     bigIqHypervisor    = var.bigIqHypervisor
   })
   as3_json = templatefile("${path.module}/templates/bigip/as3.json.tpl", {
-    gcp_region = var.gcp_region
+    gcp_region = var.gcpRegion
     #publicvip  = "0.0.0.0"
     publicvip     = google_compute_address.vip1.address
     privatevip    = var.alias_ip_range
-    uuid          = "${uuid()}"
+    uuid          = uuid()
     consulAddress = "1.2.3.4"
   })
   ts_json = templatefile("${path.module}/templates/bigip/ts.json.tpl", {
-    gcp_project_id = var.gcp_project_id
+    gcp_project_id = var.gcpProjectId
     svc_acct       = var.svc_acct
     privateKeyId   = var.privateKeyId
   })
@@ -131,13 +134,12 @@ locals {
     remote_selfip           = google_compute_instance.f5vm01.network_interface.0.network_ip
   })
 }
-
 # Create F5 BIG-IP VMs
-resource "google_compute_instance" "f5vm01" {
-  depends_on     = [google_compute_subnetwork.vpc_network_mgmt_sub, google_compute_subnetwork.vpc_network_int_sub, google_compute_subnetwork.vpc_network_ext_sub]
+resource google_compute_instance f5vm01 {
+  depends_on     = [google_container_cluster.primary, google_compute_subnetwork.vpc_network_mgmt_sub, google_compute_subnetwork.vpc_network_int_sub, google_compute_subnetwork.vpc_network_ext_sub]
   name           = "${var.prefix}-${var.host1_name}"
   machine_type   = var.bigipMachineType
-  zone           = var.gcp_zone
+  zone           = "${var.gcpRegion}-b"
   can_ip_forward = true
 
   labels = {
@@ -184,11 +186,11 @@ resource "google_compute_instance" "f5vm01" {
   }
 }
 
-resource "google_compute_instance" "f5vm02" {
-  depends_on     = [google_compute_subnetwork.vpc_network_mgmt_sub, google_compute_subnetwork.vpc_network_int_sub, google_compute_subnetwork.vpc_network_ext_sub]
+resource google_compute_instance f5vm02 {
+  depends_on     = [google_container_cluster.primary, google_compute_subnetwork.vpc_network_mgmt_sub, google_compute_subnetwork.vpc_network_int_sub, google_compute_subnetwork.vpc_network_ext_sub]
   name           = "${var.prefix}-${var.host2_name}"
   machine_type   = var.bigipMachineType
-  zone           = var.gcp_zone
+  zone           = "${var.gcpRegion}-b"
   can_ip_forward = true
 
   labels = {
@@ -238,8 +240,12 @@ resource "google_compute_instance" "f5vm02" {
   }
 }
 
-# # Troubleshooting - create local output files
-# resource "local_file" "onboard_file" {
-#   content  = local.vm01_onboard
-#   filename = "${path.module}/vm01_onboard.tpl_data.json"
-# }
+# Troubleshooting - create local output files
+#resource "local_file" "onboard_file" {
+#  content  = local.vm01_onboard
+#  filename = "${path.module}/vm01_onboard.sh"
+#}
+#resource "local_file" "do_file" {
+#  content  = local.vm01_do_json
+#  filename = "${path.module}/vm01_do.json"
+#}

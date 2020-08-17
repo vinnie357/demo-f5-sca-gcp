@@ -1,7 +1,23 @@
 # firewall
 # mgmt
 resource google_compute_firewall mgmt {
-  name    = "${var.projectPrefix}mgmt-firewall${random_pet.buildSuffix.id}"
+  name    = "${var.prefix}mgmt-firewall${random_pet.buildSuffix.id}"
+  network = google_compute_network.vpc_network_mgmt.name
+
+  allow {
+    protocol = "icmp"
+  }
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22", "443", "80"]
+  }
+
+  source_ranges = var.adminSrcAddr
+}
+# consul debug
+resource google_compute_firewall consul {
+  name    = "${var.prefix}consul-firewall${random_pet.buildSuffix.id}"
   network = google_compute_network.vpc_network_int.name
 
   allow {
@@ -10,13 +26,29 @@ resource google_compute_firewall mgmt {
 
   allow {
     protocol = "tcp"
-    ports    = ["22", "443", "80", "8500"]
+    ports    = ["22", "8500"]
+  }
+
+  source_ranges = var.adminSrcAddr
+}
+# controller debug
+resource google_compute_firewall controller {
+  name    = "${var.prefix}controller-firewall${random_pet.buildSuffix.id}"
+  network = google_compute_network.vpc_network_int.name
+
+  allow {
+    protocol = "icmp"
+  }
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22", "443"]
   }
 
   source_ranges = var.adminSrcAddr
 }
 resource google_compute_firewall iap-ingress {
-  name    = "${var.projectPrefix}-iap-firewall${random_pet.buildSuffix.id}"
+  name    = "${var.prefix}-iap-firewall${random_pet.buildSuffix.id}"
   network = google_compute_network.vpc_network_int.name
 
   allow {

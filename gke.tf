@@ -1,6 +1,6 @@
 #https://registry.terraform.io/modules/terraform-google-modules/kubernetes-engine/google/8.1.0?tab=inputs
 resource google_container_cluster primary {
-  name                      = "${var.projectPrefix}gke-cluster${random_pet.buildSuffix.id}"
+  name                      = "${var.prefix}gke-cluster${random_pet.buildSuffix.id}"
   location                  = var.gcpZone
   node_version              = var.gkeVersion
   min_master_version        = var.gkeVersion
@@ -21,7 +21,7 @@ resource google_container_cluster primary {
 }
 
 resource google_container_node_pool primary_preemptible_nodes {
-  name       = "${var.projectPrefix}node-pool${random_pet.buildSuffix.id}"
+  name       = "${var.prefix}node-pool${random_pet.buildSuffix.id}"
   location   = var.gcpZone
   cluster    = google_container_cluster.primary.name
   node_count = 3
