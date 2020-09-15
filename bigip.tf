@@ -55,6 +55,7 @@ locals {
     AS3_Document   = ""
     TS_Document    = local.ts_json
     CFE_Document   = local.vm01_cfe_json
+    prefix         = var.prefix
   })
   vm02_onboard = templatefile("${path.module}/templates/bigip/startup.sh.tpl", {
     uname          = var.uname
@@ -71,6 +72,7 @@ locals {
     AS3_Document   = local.as3_json
     TS_Document    = local.ts_json
     CFE_Document   = local.vm02_cfe_json
+    prefix         = var.prefix
   })
   vm01_do_json = templatefile("${"${"${path.module}/templates/bigip/do"}${var.license1 != "" ? "_byol" : "${var.bigIqLicensePool != "" ? "_bigiq" : ""}"}"}${var.bigIqUnitOfMeasure != "" ? "_ela" : ""}.json.tpl", {
     regKey             = var.license1
@@ -79,7 +81,7 @@ locals {
     host2              = "${var.prefix}-${var.host2_name}"
     remote_host        = "${var.prefix}-${var.host2_name}"
     dns_server         = var.dns_server
-    dns_suffix         = var.dns_suffix
+    dnsSuffix          = var.dnsSuffix
     ntp_server         = var.ntp_server
     timezone           = var.timezone
     bigIqLicenseType   = var.bigIqLicenseType
@@ -98,7 +100,7 @@ locals {
     host2              = "${var.prefix}-${var.host2_name}"
     remote_host        = google_compute_instance.f5vm01.network_interface.1.network_ip
     dns_server         = var.dns_server
-    dns_suffix         = var.dns_suffix
+    dnsSuffix          = var.dnsSuffix
     ntp_server         = var.ntp_server
     timezone           = var.timezone
     bigIqLicenseType   = var.bigIqLicenseType
@@ -120,7 +122,7 @@ locals {
   })
   ts_json = templatefile("${path.module}/templates/bigip/ts.json.tpl", {
     gcp_project_id = var.gcpProjectId
-    svc_acct       = var.svc_acct
+    serviceAccount = var.serviceAccount
     privateKeyId   = var.privateKeyId
   })
   vm01_cfe_json = templatefile("${path.module}/templates/bigip/cfe.json.tpl", {
@@ -175,13 +177,13 @@ resource google_compute_instance f5vm01 {
   }
 
   metadata = {
-    ssh-keys               = "${var.uname}:${var.gceSshPubKey}"
+    ssh-keys               = "${var.uname}:${var.gceSshPublicKey}"
     block-project-ssh-keys = true
     startup-script         = var.customImage != "" ? var.customUserData : local.vm01_onboard
   }
 
   service_account {
-    email  = var.svc_acct
+    email  = google_service_account.gce-bigip-sa.email
     scopes = ["cloud-platform"]
   }
 }
@@ -229,13 +231,13 @@ resource google_compute_instance f5vm02 {
   }
 
   metadata = {
-    ssh-keys               = "${var.uname}:${var.gceSshPubKey}"
+    ssh-keys               = "${var.uname}:${var.gceSshPublicKey}"
     block-project-ssh-keys = true
     startup-script         = var.customImage != "" ? var.customUserData : local.vm02_onboard
   }
 
   service_account {
-    email  = var.svc_acct
+    email  = google_service_account.gce-bigip-sa.email
     scopes = ["cloud-platform"]
   }
 }

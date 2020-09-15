@@ -13,7 +13,7 @@ resource google_compute_firewall mgmt {
     ports    = ["22", "443", "80"]
   }
 
-  source_ranges = var.adminSrcAddr
+  source_ranges = var.adminSourceAddress
 }
 # consul debug
 resource google_compute_firewall consul {
@@ -29,7 +29,7 @@ resource google_compute_firewall consul {
     ports    = ["22", "8500"]
   }
 
-  source_ranges = var.adminSrcAddr
+  source_ranges = var.adminSourceAddress
 }
 # controller debug
 resource google_compute_firewall controller {
@@ -45,7 +45,7 @@ resource google_compute_firewall controller {
     ports    = ["22", "443"]
   }
 
-  source_ranges = var.adminSrcAddr
+  source_ranges = var.adminSourceAddress
 }
 resource google_compute_firewall iap-ingress {
   name    = "${var.prefix}-iap-firewall${random_pet.buildSuffix.id}"
@@ -151,5 +151,5 @@ resource google_compute_firewall app {
     ports    = ["80", "443"]
   }
 
-  source_ranges = var.adminSrcAddr
+  source_ranges = var.adminSourceAddress
 }

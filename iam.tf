@@ -36,7 +36,6 @@ resource google_storage_bucket_iam_binding controller-bucket-role {
   ]
 }
 # bigip
-# controller
 resource google_service_account gce-bigip-sa {
   account_id   = "gce-bigip-sa"
   display_name = "bigip service account for secret access"

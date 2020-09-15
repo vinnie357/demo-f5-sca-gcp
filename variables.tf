@@ -1,11 +1,11 @@
 # admin
-variable adminSrcAddr {
+variable adminSourceAddress {
   description = "admin src address in cidr"
 }
 variable adminAccount {
   description = "admin account"
 }
-variable adminPass {
+variable adminPassword {
   description = "admin password"
 }
 # project
@@ -56,7 +56,7 @@ variable controllerAccount {
   description = "name of controller admin account"
   default     = "admin@nginx-gcp.internal"
 }
-variable controllerPass {
+variable controllerPassword {
   description = "pass of controller admin account"
   default     = "admin123!"
 }
@@ -74,7 +74,7 @@ variable dbUser {
 # Variables
 
 # Google Environment
-variable svc_acct {}
+variable serviceAccount {}
 variable privateKeyId {}
 variable ksecret {}
 
@@ -100,11 +100,11 @@ variable uname {}
 variable usecret {}
 variable license1 { default = "" }
 variable license2 { default = "" }
-variable gceSshPubKey {}
+variable gceSshPublicKey {}
 variable host1_name { default = "f5vm01" }
 variable host2_name { default = "f5vm02" }
 variable dns_server { default = "8.8.8.8" }
-variable dns_suffix {}
+variable dnsSuffix {}
 variable ntp_server { default = "0.us.pool.ntp.org" }
 variable timezone { default = "UTC" }
 variable DO_URL { default = "https://github.com/F5Networks/f5-declarative-onboarding/releases/download/v1.14.0/f5-declarative-onboarding-1.14.0-1.noarch.rpm" }

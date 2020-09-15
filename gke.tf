@@ -13,7 +13,7 @@ resource google_container_cluster primary {
   subnetwork               = google_compute_subnetwork.vpc_network_int_sub.id
   master_auth {
     username = var.adminAccount
-    password = var.adminPass
+    password = var.adminPassword
     client_certificate_config {
       issue_client_certificate = true
     }

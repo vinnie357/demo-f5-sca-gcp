@@ -18,6 +18,6 @@
       },
       "projectId": "${gcp_project_id}",
       "privateKeyId": "${privateKeyId}",
-      "serviceEmail": "${svc_acct}"
+      "serviceEmail": "${serviceAccount}"
     }
   }

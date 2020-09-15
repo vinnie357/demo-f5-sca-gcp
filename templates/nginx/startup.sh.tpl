@@ -87,11 +87,24 @@ do
 status=$(curl -ksi https://$ip/$version$loginUrl  | grep HTTP | awk '{print $2}')
 if [[ $status == "401" ]]; then
     echo "ready $status"
+    echo "wait 1 minute for apis"
+    sleep 60
+    # login for cookie
     curl -sk --header "Content-Type:application/json"  --data "$payload" --url https://$ip/$version$loginUrl --dump-header /cookie.txt
     cookie=$(cat /cookie.txt | grep Set-Cookie: | awk '{print $2}')
-    rm /cookie.txt
-    #create location
-    curl -sk --header "Content-Type:application/json" --header "Cookie: $cookie" --data "$zonePayload" --url https://$ip/$version$locationsUri
+    rm -f /cookie.txt
+    # locations api
+    tries=0
+    while [ $tries -le 10 ]
+    do
+    locationsApi=$(curl -sik --header "Content-Type:application/json" --header "Cookie: $cookie" --url https://$ip/$version$locationsUri  | grep HTTP | awk '{print $2}')
+    if [[ $locationsApi == "200" ]]; then
+      #create location
+      curl -sk --header "Content-Type:application/json" --header "Cookie: $cookie" --data "$zonePayload" --url https://$ip/$version$locationsUri
+      break
+    fi
+    sleep 6
+    done
     # get token
     token=$(curl -sk --header "Content-Type:application/json" --header "Cookie: $cookie" --url https://$ip/$version$tokenUrl | jq -r .desiredState.agentSettings.apiKey)
     # agent install

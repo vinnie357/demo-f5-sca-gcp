@@ -1,4 +1,5 @@
 terraform {
+  required_version = "~> 0.12"
   backend "remote" {
     # The name of your Terraform Cloud organization.
     organization = "vinnief5dev"

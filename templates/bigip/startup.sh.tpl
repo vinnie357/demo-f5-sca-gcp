@@ -235,8 +235,11 @@ date
 waitNetwork
 echo "Retrieving BIG-IP password from Metadata secret"
 svcacct_token=$(curl -s -f --retry 20 "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" -H "Metadata-Flavor: Google" | jq -r ".access_token")
-passwd=$(curl -s -f --retry 20 "https://secretmanager.googleapis.com/v1/projects/$projectId/secrets/$usecret/versions/latest:access" -H "Authorization: Bearer $svcacct_token" | jq -r ".payload.data" | base64 --decode)
-bigiqPass=$(curl -s -f --retry 20 "https://secretmanager.googleapis.com/v1/projects/$projectId/secrets/$bigIqSecret/versions/latest:access" -H "Authorization: Bearer $svcacct_token" | jq -r ".payload.data" | base64 --decode)
+#passwd=$(curl -s -f --retry 20 "https://secretmanager.googleapis.com/v1/projects/$projectId/secrets/$usecret/versions/latest:access" -H "Authorization: Bearer $svcacct_token" | jq -r ".payload.data" | base64 --decode)
+# secret
+secret=$(curl -s -f --retry 20 "https://secretmanager.googleapis.com/v1/projects/$projectId/secrets/bigip-secret/versions/latest:access" -H "Authorization: Bearer $svcacct_token" | jq -r ".payload.data" | base64 --decode)
+passwd=$(echo $secret  | jq -r .pass)
+bigiqPass=$(echo $secret | jq -r .bigiqPass)
 date
 
 # Submit DO Declaration
@@ -410,16 +413,19 @@ date
 waitNetwork
 
 # BIG-IP Credentials
+echo "Retrieving BIG-IP password from Metadata secret"
 svcacct_token=$(curl -s -f --retry 20 "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" -H "Metadata-Flavor: Google" | jq -r ".access_token")
-admin_password=$(curl -s -f --retry 20 "https://secretmanager.googleapis.com/v1/projects/$projectId/secrets/$usecret/versions/1:access" -H "Authorization: Bearer $svcacct_token" | jq -r ".payload.data" | base64 --decode)
-CREDS="admin:$admin_password"
+# secret
+secret=$(curl -s -f --retry 20 "https://secretmanager.googleapis.com/v1/projects/$projectId/secrets/bigip-secret/versions/latest:access" -H "Authorization: Bearer $svcacct_token" | jq -r ".payload.data" | base64 --decode)
+admin_password="$(echo $secret  | jq -r .pass)"
+CREDS="$admin_username:$admin_password"
 
 # Create admin account and password
 echo "Updating admin account"
 if [[ $admin_username != "admin" ]]; then
-  tmsh create auth user $admin_username password "$admin_password" shell bash partition-access add { all-partitions { role admin } };
+  tmsh create auth user $admin_username password \'$${admin_password}\' shell bash partition-access add { all-partitions { role admin } };
 else
-  tmsh modify auth user admin password "$admin_password";
+  tmsh modify auth user admin password \'$${admin_password}\';
 fi
 
 # Copy SSH key

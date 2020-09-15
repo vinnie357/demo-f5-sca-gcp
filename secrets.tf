@@ -2,6 +2,14 @@
 #resource google_project_service secretmanager {
 #  service  = "secretmanager.googleapis.com"
 #}
+# 
+# random password when admin password unset DEMO ONLY
+#
+resource random_password password {
+  length           = 16
+  special          = true
+  override_special = " #%*+,-./:=?@[]^_~"
+}
 # nginx
 # create secret
 resource google_secret_manager_secret nginx-secret {
@@ -23,7 +31,7 @@ resource google_secret_manager_secret_version nginx-secret {
   "cert":"${var.nginxCert}",
   "key": "${var.nginxKey}",
   "cuser": "${var.controllerAccount}",
-  "cpass": "${var.controllerPass}"
+  "cpass": "${var.controllerPassword}"
   }
   EOF
 }
@@ -47,7 +55,7 @@ resource google_secret_manager_secret_version controller-secret {
   {
   "license": ${jsonencode(var.controllerLicense)},
   "user": "${var.controllerAccount}",
-  "pass": "${var.controllerPass}",
+  "pass": "${var.controllerPassword}",
   "dbpass": "${var.dbPass}",
   "dbuser": "${var.dbUser}"
   }
@@ -71,11 +79,8 @@ resource google_secret_manager_secret_version bigip-secret {
   secret      = google_secret_manager_secret.bigip-secret.id
   secret_data = <<-EOF
   {
-  "license": ${jsonencode(var.controllerLicense)},
-  "user": "${var.controllerAccount}",
-  "pass": "${var.controllerPass}",
-  "dbpass": "${var.dbPass}",
-  "dbuser": "${var.dbUser}"
+  "pass": "${var.adminPassword != "" ? var.adminPassword : random_password.password.result}",
+  "bigiqPass": "${var.dbPass}"
   }
   EOF
 }

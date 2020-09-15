@@ -26,7 +26,7 @@
                 "2001:4860:4860::8844"
             ],
             "search": [
-                "${dns_suffix}",
+                "${dnsSuffix}",
                 "google.internal",
                 "f5.com"
             ]
@@ -55,7 +55,7 @@
         "failoverGroup": {
             "class": "DeviceGroup",
             "type": "sync-failover",
-            "members": ["${host1}.${dns_suffix}", "${host2}.${dns_suffix}"],
+            "members": ["${host1}.${dnsSuffix}", "${host2}.${dnsSuffix}"],
             "owner": "/Common/failoverGroup/members/0",
             "autoSync": true,
             "saveOnAutoSync": false,

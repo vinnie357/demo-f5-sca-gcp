@@ -1,30 +1,28 @@
 # project
-projectPrefix     = "demonginx"
-gcpProjectId      = "myprojectid"
-gcpRegion         = "us-east1"
-gcpZone           = "us-east1-b"
+prefix       = "demonginx"
+gcpProjectId = "myprojectid"
+gcpRegion    = "us-east1"
+gcpZone      = "us-east1-b"
 # admin
-adminSrcAddr   = ["192.168.2.1/32", "192.168.2.3/32", "192.168.4.3/32"]
-gceSshPubKey   = "ssh-rsa AAAAB3NzaC1yc2EAAAA..."
+adminAccount       = "notadmin"
+adminPassword      = "pleaseusevault123!"
+adminSourceAddress = ["192.168.2.1/32", "192.168.2.3/32", "192.168.4.3/32"]
+gceSshPublicKey    = "ssh-rsa AAAAB3NzaC1yc2EAAAA..."
 # nginx
-nginxKey          = "198rt9de8fu"
-nginxCert         = "fdsfjsakdf"
-adminAccount      = "notadmin"
-adminPass         = "pleaseusevault"
-adminSrcAddr      = ["192.168.1.2/32", "102.67.2.5/32"]
-controllerBucket  = "my-bucket"
-controllerLicense = "mylicensetext"
-controllerAccount = "myemail@domain.com"
-controllerPass    = "pleaseusevault"
-dbPass            = "pleaseusevault"
-dbUser            = "mydbuser"
+nginxKey           = "198rt9de8fu"
+nginxCert          = "fdsfjsakdf"
+controllerBucket   = "my-bucket"
+controllerLicense  = "mylicensetext"
+controllerAccount  = "myemail@domain.com"
+controllerPassword = "pleaseusevault123!"
+dbPass             = "pleaseusevault123!"
+dbUser             = "mydbuser"
 # bigip
 ## payg
 uname          = "zadmin"
 usecret        = "my-demo-secret"
-prefix         = "demo"
-dns_suffix     = "c.<my-project>.internal"
-svc_acct       = "myaccount@<myproject>.iam.gserviceaccount.com"
+dnsSuffix      = "c.<my-project>.internal"
+serviceAccount = "myaccount@<myproject>.iam.gserviceaccount.com"
 privateKeyId   = "abcdcba123321"
 ksecret        = "svc-acct-secret"
 license1       = ""

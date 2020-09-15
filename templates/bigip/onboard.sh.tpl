@@ -735,7 +735,7 @@ submit cli transaction" | tmsh -q
 # end network
 #
 # modify DO
-PROJECTPREFIX=${projectPrefix}
+PROJECTPREFIX=${prefix}
 buildSuffix=${buildSuffix}
 hostName=\$(curl -s -f --retry 20 -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/hostname )
 bigip1url=\$(echo "https://storage.googleapis.com/storage/v1/b/"\$PROJECTPREFIX"bigip-storage\$buildSuffix/o/bigip-1?alt=media")
