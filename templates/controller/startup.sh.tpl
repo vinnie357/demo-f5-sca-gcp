@@ -59,7 +59,7 @@ docker-compose up -d
 echo "docker done" >> /status.log
 # install controller
 token=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/${serviceAccount}/token' -H 'Metadata-Flavor: Google' | jq -r .access_token )
-url="https://storage.googleapis.com/storage/v1/b/${bucket}/o/controller-installer-3.7.0.tar.gz?alt=media"
+url="https://storage.googleapis.com/storage/v1/b/${bucket}/o/controller-installer-${controllerVersion}.tar.gz?alt=media"
 name=$(basename $url )
 file=$${name}
 file=$${file%"?alt=media"}
