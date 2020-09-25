@@ -46,8 +46,8 @@ variable nginxCert {
 # controller
 variable controllerVersion {
   type        = string
-  description = "(optional) describe your variable"
-  default     = "3.8.0"
+  description = "(optional) Version of controller to install"
+  default     = "3.9.0"
 }
 variable controllerLicense {
   description = "license for controller"

@@ -174,6 +174,10 @@ resource google_compute_instance f5vm01 {
   network_interface {
     network    = var.intVpc
     subnetwork = var.intSubnet
+    alias_ip_range {
+      ip_cidr_range         = cidrsubnet(google_container_cluster.primary.ip_allocation_policy.0.cluster_ipv4_cidr_block, 10, 201)
+      subnetwork_range_name = google_container_cluster.primary.ip_allocation_policy.0.cluster_secondary_range_name
+    }
   }
 
   metadata = {
@@ -228,6 +232,10 @@ resource google_compute_instance f5vm02 {
   network_interface {
     network    = google_compute_network.vpc_network_int.name
     subnetwork = google_compute_subnetwork.vpc_network_int_sub.name
+    alias_ip_range {
+      ip_cidr_range         = cidrsubnet(google_container_cluster.primary.ip_allocation_policy.0.cluster_ipv4_cidr_block, 10, 202)
+      subnetwork_range_name = google_container_cluster.primary.ip_allocation_policy.0.cluster_secondary_range_name
+    }
   }
 
   metadata = {

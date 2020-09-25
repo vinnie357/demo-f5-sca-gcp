@@ -119,5 +119,6 @@ sleep 60
 done
 }
 register
-
+# start nginx
+nginx
 echo "done"

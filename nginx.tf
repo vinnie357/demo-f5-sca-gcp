@@ -26,6 +26,11 @@ resource google_compute_instance_template nginx-template {
     subnetwork = google_compute_subnetwork.vpc_network_int_sub.id
     access_config {
     }
+    # how do?! needs to pick a free range for each new instance 
+    # alias_ip_range {
+    #   ip_cidr_range         = cidrsubnet(google_container_cluster.primary.ip_allocation_policy.0.cluster_ipv4_cidr_block, 10, 203)
+    #   subnetwork_range_name = google_container_cluster.primary.ip_allocation_policy.0.cluster_secondary_range_name
+    # }
   }
   lifecycle {
     create_before_destroy = true
